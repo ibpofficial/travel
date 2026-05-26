@@ -8,6 +8,20 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
+
+// Enable CORS for external client access (like GitHub Pages deployments)
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "X-Requested-With,content-type,authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  if (req.method === "OPTIONS") {
+    res.sendStatus(200);
+    return;
+  }
+  next();
+});
+
 const PORT = 3000;
 
 // Shared Gemini client with safety guards

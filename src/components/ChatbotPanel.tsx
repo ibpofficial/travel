@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { ChatMessage, Itinerary } from "../types";
+import { getApiUrl } from "../lib/api";
 import { Sparkles, Send, Bot, User, Trash2, ArrowRight, X, ChevronRight, HelpCircle } from "lucide-react";
 
 interface ChatbotPanelProps {
@@ -70,7 +71,7 @@ I can help details-tune your trip to **${destName}**. Try asking me things like:
         text: m.text
       }));
 
-      const res = await fetch("/api/chat", {
+      const res = await fetch(getApiUrl("/api/chat"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

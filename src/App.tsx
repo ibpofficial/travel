@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Itinerary, TripPreference } from "./types";
+import { getApiUrl } from "./lib/api";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ExploreHome from "./components/ExploreHome";
@@ -42,7 +43,7 @@ export default function App() {
     setIsGenerating(true);
     setError(null);
     try {
-      const res = await fetch("/api/generate-itinerary", {
+      const res = await fetch(getApiUrl("/api/generate-itinerary"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(prefs)

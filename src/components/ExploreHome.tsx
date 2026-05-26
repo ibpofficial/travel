@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Itinerary } from "../types";
+import { getApiUrl } from "../lib/api";
 import { Compass, Sparkles, MapPin, Calendar, DollarSign, ArrowRight, Flame, Map, CloudSun } from "lucide-react";
 
 interface ExploreHomeProps {
@@ -15,7 +16,7 @@ export default function ExploreHome({ onSelectPackage, onStartPlanner }: Explore
   useEffect(() => {
     async function fetchPackages() {
       try {
-        const res = await fetch("/api/curated-packages");
+        const res = await fetch(getApiUrl("/api/curated-packages"));
         if (!res.ok) throw new Error("Could not load curated packages");
         const data = await res.json();
         setPackages(data);
