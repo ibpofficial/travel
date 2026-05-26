@@ -1,10 +1,11 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Itinerary, CostBreakdown, DailySchedule, ActivityItem } from "../types";
 import { 
   Compass, Calendar, IndianRupee, CloudSun, MapPin, 
   Bed, Utensils, Shield, Users, Clock, AlertCircle, 
   Map, Download, Layers, TrendingUp, Sparkles, AlertTriangle, 
-  ChevronRight, ArrowRight, UserCheck, CheckSquare, Footprints
+  ChevronRight, ArrowRight, UserCheck, CheckSquare, Footprints,
+  Ticket, Plus, Trash2, Check
 } from "lucide-react";
 import ExpenseTracker from "./ExpenseTracker";
 
@@ -61,6 +62,80 @@ interface ItineraryViewerProps {
 export default function ItineraryViewer({ itinerary, onSave, isSaved }: ItineraryViewerProps) {
   const [activeDay, setActiveDay] = useState<number>(1);
   const [costComparisonMode, setCostComparisonMode] = useState<'current' | 'budget' | 'luxury'>('current');
+
+  // Interactive packing items state loaded from localStorage for offline utility
+  const [checkedItems, setCheckedItems] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(`pack-${itinerary.id}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const defaultPackList = [
+    "UPI Apps set up & PIN ready (GPay / PhonePe / Paytm)",
+    "Cash in wallet (₹100 / ₹200 notes for small auto rides & cutting chai)",
+    "Comfortable sports shoes / soft walking sandals",
+    "Personal medicine kit (Pudin Hara, Digene, Paracetamol, Band-Aid)",
+    "Odomos cream or mosquito repellent spray",
+    "Powerbank (Fully charged!) & Phone charging cable",
+    "Any active Government Photo ID Card (Aadhaar / Passport / Voter ID)",
+    ...ensureArray<string>(itinerary.packingList)
+  ];
+
+  const [packList, setPackList] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(`packlist-${itinerary.id}`);
+      return saved ? JSON.parse(saved) : defaultPackList;
+    } catch {
+      return defaultPackList;
+    }
+  });
+
+  const [newPackItem, setNewPackItem] = useState("");
+
+  // Persisted Ticket pocket details
+  const [pnr, setPnr] = useState(() => localStorage.getItem(`pnr-${itinerary.id}`) || "");
+  const [transitNo, setTransitNo] = useState(() => localStorage.getItem(`transitNo-${itinerary.id}`) || itinerary.preferences?.transitNameOrNumber || "");
+  const [transitSeat, setTransitSeat] = useState(() => localStorage.getItem(`seat-${itinerary.id}`) || itinerary.preferences?.transitClass || "");
+  const [boardTime, setBoardTime] = useState(() => localStorage.getItem(`boardTime-${itinerary.id}`) || itinerary.preferences?.transitTimeSlot || "");
+  const [isTicketSaved, setIsTicketSaved] = useState(false);
+
+  const handleTogglePack = (item: string) => {
+    const updated = checkedItems.includes(item)
+      ? checkedItems.filter(i => i !== item)
+      : [...checkedItems, item];
+    setCheckedItems(updated);
+    localStorage.setItem(`pack-${itinerary.id}`, JSON.stringify(updated));
+  };
+
+  const handleAddPackItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPackItem.trim()) return;
+    const updated = [...packList, newPackItem.trim()];
+    setPackList(updated);
+    localStorage.setItem(`packlist-${itinerary.id}`, JSON.stringify(updated));
+    setNewPackItem("");
+  };
+
+  const handleDeletePackItem = (itemToDelete: string) => {
+    const updated = packList.filter(item => item !== itemToDelete);
+    setPackList(updated);
+    localStorage.setItem(`packlist-${itinerary.id}`, JSON.stringify(updated));
+    const checkedUpdated = checkedItems.filter(item => item !== itemToDelete);
+    setCheckedItems(checkedUpdated);
+    localStorage.setItem(`pack-${itinerary.id}`, JSON.stringify(checkedUpdated));
+  };
+
+  const handleSaveTickets = () => {
+    localStorage.setItem(`pnr-${itinerary.id}`, pnr);
+    localStorage.setItem(`transitNo-${itinerary.id}`, transitNo);
+    localStorage.setItem(`seat-${itinerary.id}`, transitSeat);
+    localStorage.setItem(`boardTime-${itinerary.id}`, boardTime);
+    setIsTicketSaved(true);
+    setTimeout(() => setIsTicketSaved(false), 2000);
+  };
 
   // Dynamically generate comparable configurations based on core metrics
   const duration = itinerary.duration;
@@ -213,7 +288,7 @@ Safe & secured travels with AeroPlan AI.
             )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-gray-900 leading-tight">
-            Your Bespoke Trip to {itinerary.destination}
+            Your Custom Trip to {itinerary.destination}
           </h1>
           {itinerary.preferences?.origin && (
             <p className="text-xs sm:text-sm font-semibold text-gray-600 flex items-center gap-1.5 pt-1">
@@ -257,9 +332,9 @@ Safe & secured travels with AeroPlan AI.
             <div>
               <h3 className="text-sm font-bold text-gray-900 font-display flex items-center space-x-1.5">
                 <Layers className="h-4 w-4 text-brand-600" />
-                <span>Tier Cost Comparison Estimator</span>
+                <span>Compare Different Budget Options</span>
               </h3>
-              <p className="text-[10px] text-gray-500 leading-none">Evaluate budget, smart or luxury indexes.</p>
+              <p className="text-[10px] text-gray-500 leading-none">See how much you can save or upgrade your trip.</p>
             </div>
 
             {/* Config Selectors */}
@@ -268,41 +343,41 @@ Safe & secured travels with AeroPlan AI.
                 onClick={() => setCostComparisonMode('budget')}
                 className={`px-2.5 py-1 rounded-lg cursor-pointer ${costComparisonMode === 'budget' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
               >
-                Budget
+                Pocket Saver
               </button>
               <button
                 onClick={() => setCostComparisonMode('current')}
                 className={`px-2.5 py-1 rounded-lg cursor-pointer ${costComparisonMode === 'current' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
               >
-                Original
+                Standard
               </button>
               <button
                 onClick={() => setCostComparisonMode('luxury')}
                 className={`px-2.5 py-1 rounded-lg cursor-pointer ${costComparisonMode === 'luxury' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
               >
-                Luxury
+                Luxury Option
               </button>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="space-y-1">
-              <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-widest block">Projected Total Outflow</span>
+              <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-widest block">Estimated Travel Budget</span>
               <p className="text-3xl font-extrabold text-indigo-600 font-mono tracking-tight flex items-center gap-1.5">
                 {formatCost(activeTotal)} <span className="text-xs text-gray-400 font-medium font-sans">INR</span>
               </p>
             </div>
             
             <div className="text-[11px] text-gray-500 leading-relaxed max-w-xs sm:text-right">
-              {costComparisonMode === 'budget' && "Lowest possible cost configuration utilizing hostel accommodations, public transit grids, and local street stalls."}
-              {costComparisonMode === 'current' && "Your targeted pacing standard. Combines high-density boutique hotels and convenient bullet or regional trains."}
-              {costComparisonMode === 'luxury' && "Premium travel experiences involving luxury villas / private suites, premium flights, and private transfers."}
+              {costComparisonMode === 'budget' && "Cheapest option focusing on cozy hostels, trains, buses, and delicious local street food joints."}
+              {costComparisonMode === 'current' && "Your selected style. Well-balanced budget with clean hotels and convenient transit/cabs."}
+              {costComparisonMode === 'luxury' && "Premium luxury. Star hotels/resorts, comfortable flights, and private AC cars."}
             </div>
           </div>
 
           {/* Styledstacked percentage distribution */}
           <div className="space-y-2">
-            <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider block">Estimated Funds Allocation</span>
+            <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider block">Where is your money going? (Expense Share)</span>
             <div className="h-5 w-full bg-gray-100 rounded-full overflow-hidden flex font-mono text-[9px] font-bold text-white text-center">
               {Object.keys(activeBreakdown).map((key) => {
                 const value = (activeBreakdown as any)[key];
@@ -340,13 +415,13 @@ Safe & secured travels with AeroPlan AI.
         </div>
 
         {/* Live Weather details & Safeties column */}
-        <div className="lg:col-span-5 bg-slate-50 border border-gray-100 rounded-2xl p-6 flex flex-col justify-between space-y-6">
+        <div className="lg:col-span-5 bg-slate-50 border border-gray-100 rounded-2xl p-6 flex flex-col space-y-6">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">Atmospheric Check</span>
+              <span className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">How is the weather?</span>
               <span className="text-[10px] bg-sky-100 text-sky-800 px-2 py-0.5 rounded font-mono font-bold flex items-center space-x-1 animate-pulse">
                 <CloudSun className="h-3 w-3" />
-                <span>Live Feed</span>
+                <span>Live Status</span>
               </span>
             </div>
 
@@ -359,35 +434,149 @@ Safe & secured travels with AeroPlan AI.
                 <p className="text-xs text-gray-500 font-semibold">{itinerary.weatherForecast.condition}: {itinerary.weatherForecast.description}</p>
               </div>
             </div>
+          </div>
 
-            {/* Custom weather packing lists */}
-            <div className="space-y-1.5 pt-3 border-t border-gray-100">
-              <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider block">Recommended Packing Suggestions</span>
-              <div className="flex flex-wrap gap-1.5">
-                {ensureArray<string>(itinerary.packingList).map((item, i) => (
-                  <span key={i} className="text-[10px] bg-white border border-gray-200 text-gray-600 px-2.5 py-1 rounded-lg font-medium flex items-center space-x-1">
-                    <CheckSquare className="h-3 w-3 text-brand-500" />
-                    <span>{item}</span>
-                  </span>
-                ))}
+          {/* 🎫 Travel Tickets & PNR pocket (Wallet) */}
+          <div className="bg-white border border-gray-200/80 rounded-xl p-4 space-y-4 shadow-sm">
+            <div className="flex items-center space-x-2 pb-1.5 border-b border-gray-100">
+              <Ticket className="h-4.5 w-4.5 text-brand-600 shrink-0" />
+              <div className="leading-none">
+                <h4 className="text-xs font-bold text-gray-900 font-display uppercase tracking-wider">Ticket & PNR Safe Pocket</h4>
+                <span className="text-[9px] text-gray-400">Save your seat or ticket numbers in browser memory</span>
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 text-[11px]">
+              <div className="space-y-1">
+                <label className="text-[9px] font-mono font-bold text-gray-400 uppercase tracking-wider block">Flight / Train No.</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Vande Bharat 22436"
+                  value={transitNo}
+                  onChange={(e) => setTransitNo(e.target.value)}
+                  className="w-full bg-slate-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-none focus:border-brand-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-mono font-bold text-gray-400 uppercase tracking-wider block">PNR / Ticket ID</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 2345678912"
+                  value={pnr}
+                  onChange={(e) => setPnr(e.target.value)}
+                  className="w-full bg-slate-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-none focus:border-brand-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-mono font-bold text-gray-400 uppercase tracking-wider block">Coach / Seat / Tier</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Coach C3, Seat 24"
+                  value={transitSeat}
+                  onChange={(e) => setTransitSeat(e.target.value)}
+                  className="w-full bg-slate-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-none focus:border-brand-500"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-mono font-bold text-gray-400 uppercase tracking-wider block">Departure / Boarding Time</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 06:00 AM"
+                  value={boardTime}
+                  onChange={(e) => setBoardTime(e.target.value)}
+                  className="w-full bg-slate-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-semibold focus:outline-none focus:border-brand-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-1">
+              <p className="text-[9px] text-gray-400 leading-snug">🔒 Saves offline instantly.</p>
+              <button
+                type="button"
+                onClick={handleSaveTickets}
+                className="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white font-bold text-[10px] rounded-lg transition-all cursor-pointer shadow-xs whitespace-nowrap"
+              >
+                {isTicketSaved ? "Saved! ✓" : "Save Details"}
+              </button>
             </div>
           </div>
 
-          <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-[10px] text-emerald-800 space-y-1 mt-auto">
+          {/* 🎒 Interactive Packing Checklist with customized items */}
+          <div className="bg-white border border-gray-200/80 rounded-xl p-4 space-y-3 shadow-sm">
+            <div className="pb-1.5 border-b border-gray-100 flex justify-between items-center">
+              <div className="leading-none">
+                <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider block">Bag Packer Assistant</span>
+                <h4 className="text-xs font-bold text-gray-950 font-display">Packing Checklist for Indian Trips 🎒</h4>
+              </div>
+              <span className="text-[9px] font-mono text-brand-600 font-bold bg-brand-50 px-2 py-0.5 rounded">
+                {checkedItems.length} / {packList.length} packed
+              </span>
+            </div>
+
+            {/* Checklist Loop */}
+            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+              {packList.map((item) => {
+                const isChecked = checkedItems.includes(item);
+                return (
+                  <div key={item} className="flex items-start justify-between space-x-2 text-xs py-1 hover:bg-slate-50/50 rounded-lg px-1 transition-colors">
+                    <label className="flex items-start space-x-2.5 cursor-pointer select-none text-gray-700 flex-1">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleTogglePack(item)}
+                        className="mt-0.5 rounded border-gray-300 text-brand-600 focus:ring-brand-500 h-3.5 w-3.5"
+                      />
+                      <span className={`text-xs ${isChecked ? 'line-through text-gray-400 font-medium' : 'text-gray-700 font-semibold'}`}>
+                        {item}
+                      </span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePackItem(item)}
+                      className="text-gray-400 hover:text-rose-600 p-0.5 cursor-pointer rounded transition-colors"
+                      title="Remove item"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Add Custom packing item input */}
+            <form onSubmit={handleAddPackItem} className="flex items-center gap-1.5 pt-1.5 border-t border-gray-100">
+              <input
+                type="text"
+                placeholder="Add special item... e.g. Camera, Sunscreen"
+                value={newPackItem}
+                onChange={(e) => setNewPackItem(e.target.value)}
+                className="flex-1 bg-slate-50 border border-gray-200 rounded-lg px-2 py-1 text-xs font-semibold focus:outline-none focus:border-brand-500"
+              />
+              <button
+                type="submit"
+                className="p-1 px-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg flex items-center justify-center text-xs font-bold shrink-0 transition cursor-pointer h-8"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                <span>Add</span>
+              </button>
+            </form>
+          </div>
+
+          {/* Safety card in simple words */}
+          <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-[10px] text-emerald-805 space-y-1">
             <div className="font-bold flex items-center space-x-1.5 uppercase font-mono tracking-wider">
               <Shield className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
-              <span>Safety & crowds Score</span>
+              <span>Safe Travel Alerts & Crowd Info</span>
             </div>
             <p className="leading-relaxed">
-              <strong>Neighborhood Safeguards:</strong> {ensureArray<string>(itinerary.safeAreas).join(', ')} are marked as ultra-safe stays. <strong>Hostility Level:</strong> {itinerary.crowdLevelPredictions || "Low crowd level indices."}
+              <strong>Super-Safe Areas to Stay:</strong> {ensureArray<string>(itinerary.safeAreas).join(', ')}. <strong>Expected Crowds:</strong> {itinerary.crowdLevelPredictions || "Generally comfortable and peaceful zones."}
             </p>
           </div>
             {/* 3. Accommodate Stays & Gastronomy boards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Lodging Hotels column */}
         <div className="space-y-4">
-          <span className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest block">Recommended Lodging & Accommodations</span>
+          <span className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest block">Top Places to Stay (Recommended Hotels)</span>
           <div className="grid grid-cols-1 gap-6">
             {ensureArray<any>(itinerary.hotelRecommendations).map((hotel, idx) => {
               const perNightRate = hotel.estimatedPricePerNightINR || Math.round(itinerary.costBreakdown.accommodation / Math.max(1, itinerary.duration));
@@ -429,7 +618,7 @@ Safe & secured travels with AeroPlan AI.
                     </div>
 
                     <div className="space-y-2 pt-2">
-                      <span className="text-[9px] font-mono font-bold text-gray-400 uppercase tracking-wider block">Key Amenities Provided:</span>
+                      <span className="text-[9px] font-mono font-bold text-gray-400 uppercase tracking-wider block">Hotel Facilities (Amenities):</span>
                       <div className="flex flex-wrap gap-1">
                         {ensureArray<string>(hotel.amenities).map(a => (
                           <span key={a} className="bg-slate-100 text-slate-600 border border-slate-200/55 text-[9px] font-medium px-2 py-0.5 rounded-md">
@@ -447,7 +636,7 @@ Safe & secured travels with AeroPlan AI.
 
         {/* Gastronomy Places column */}
         <div className="space-y-4">
-          <span className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest block">Curated Gastronomy Suggestions</span>
+          <span className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest block">Best Places to Eat (Restaurants & Food Joints)</span>
           <div className="grid grid-cols-1 gap-6">
             {ensureArray<any>(itinerary.restaurantSuggestions).map((rest, idx) => {
               const avgCost = rest.averageCostPerPersonINR || 450;
@@ -477,13 +666,13 @@ Safe & secured travels with AeroPlan AI.
 
                       {/* Avg Dining Cost Tag */}
                       <div className="bg-orange-50/50 border border-orange-100 rounded-xl p-3 flex justify-between items-center text-xs">
-                        <span className="font-semibold text-orange-850">Average Cost per Person:</span>
+                        <span className="font-semibold text-orange-850">Estimated Price per Meal:</span>
                         <span className="font-mono font-extrabold text-orange-700 text-sm">{formatCost(avgCost)}</span>
                       </div>
                     </div>
 
                     <div className="space-y-2 pt-2">
-                      <span className="text-[9px] font-mono font-bold text-gray-400 uppercase tracking-wider block">Signature Must-Try Dishes:</span>
+                      <span className="text-[9px] font-mono font-bold text-gray-400 uppercase tracking-wider block">Must-Try Food Items (Best Dishes):</span>
                       <div className="flex flex-wrap gap-1">
                         {ensureArray<string>(rest.recommendedDishes).map(dish => (
                           <span key={dish} className="bg-amber-50 border border-amber-100 text-amber-800 text-[10px] font-semibold px-2 py-0.5 rounded-lg">

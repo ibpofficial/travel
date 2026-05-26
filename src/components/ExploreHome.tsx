@@ -52,15 +52,15 @@ export default function ExploreHome({ onSelectPackage, onStartPlanner }: Explore
         <div className="relative max-w-3xl mx-auto text-center space-y-6">
           <div className="inline-flex items-center space-x-2 bg-brand-500/10 border border-brand-500/20 px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold text-brand-400 tracking-wider uppercase">
             <Sparkles className="h-3.5 w-3.5 animate-pulse text-brand-400" />
-            <span>AI-Driven Itinerary Co-pilot</span>
+            <span>Smart Travel Planning Assistant</span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-extrabold font-display tracking-tight leading-none text-white">
-            Bespoke travels, engineered in seconds.
+            Beautiful Travel Plans, Made in Seconds!
           </h1>
 
           <p className="text-base sm:text-xl text-slate-300 leading-relaxed font-sans max-w-2xl mx-auto">
-            AeroPlan parses live weather indices, safe stay classifications, and travel paces to build personalized daily itineraries matching your precise micro-preferences.
+            Get your dream trip plan with accurate hotel prices, top local restaurants, handy packing checklists, safety tips, and fully customized hour-by-hour sightseeing tours.
           </p>
 
           <div className="pt-4 flex flex-col sm:flex-row justify-center items-center gap-4">
@@ -86,13 +86,13 @@ export default function ExploreHome({ onSelectPackage, onStartPlanner }: Explore
       <section id="packages-section" className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
           <div>
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-brand-600">Preset Blueprints</span>
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-brand-600">Ready Packages</span>
             <h2 className="text-2xl sm:text-3xl font-bold font-display text-gray-900 tracking-tight">
-              Curated Masterpieces
+              Top Ready-made Trip Packages
             </h2>
           </div>
           <p className="text-sm text-gray-500 max-w-md">
-            Instantly load high-fidelity trip configurations and refine them actively with the chat assistant later.
+            Load beautiful, hand-picked trip plans instantly and modify them easily using our travel chat assistant!
           </p>
         </div>
 
